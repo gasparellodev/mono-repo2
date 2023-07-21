@@ -18,6 +18,7 @@ import { PrismaService } from './prisma.service';
 import { UsersModule } from './users/users.module';
 import { Oauth2Module } from './oauth2/oauth2.module';
 import { StorageModule } from './storage/storage.module';
+import { MercadoPagoModule } from './mercado-pago/mercado-pago.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { StorageModule } from './storage/storage.module';
     ArenasModule,
     Oauth2Module,
     StorageModule,
+    MercadoPagoModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

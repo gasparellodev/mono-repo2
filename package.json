@@ -53,6 +53,7 @@
     "joi": "^17.9.2",
     "js-big-decimal": "^1.4.1",
     "jsonwebtoken": "^9.0.0",
+    "mercadopago": "^1.5.17",
     "moment": "^2.29.4",
     "moment-timezone": "^0.5.43",
     "nestjs-throttler-storage-redis": "^0.3.0",
