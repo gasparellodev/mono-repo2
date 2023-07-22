@@ -1,5 +1,3 @@
-import { EntityRepository } from '@mikro-orm/core';
-import { InjectRepository } from '@mikro-orm/nestjs';
 import {
   BadRequestException,
   Injectable,
@@ -16,7 +14,6 @@ import { EmailDto } from './dtos/email.dto';
 import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { SignInDto } from './dtos/sign-in.dto';
 import { SignUpDto } from './dtos/sign-up.dto';
-import { BlacklistedTokenEntity } from './entities/blacklisted-token.entity';
 import { IAuthResult } from './interfaces/auth-result.interface';
 import { CommonService } from '../common/common.service';
 import { IMessage } from '../common/interfaces/message.interface';
@@ -28,18 +25,18 @@ import { IEmailToken } from '../jwt/interfaces/email-token.interface';
 import { IRefreshToken } from '../jwt/interfaces/refresh-token.interface';
 import { JwtService } from '../jwt/jwt.service';
 import { MailerService } from '../mailer/mailer.service';
+import { PrismaService } from '../prisma.service';
 import { OauthProvidersEnum } from '../users/enums/oauth-providers.enum';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(BlacklistedTokenEntity)
-    private readonly blacklistedTokensRepository: EntityRepository<BlacklistedTokenEntity>,
     private readonly commonService: CommonService,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly mailerService: MailerService,
+    private readonly prisma: PrismaService,
   ) {}
 
   public async signUp(dto: SignUpDto, domain?: string): Promise<IMessage> {
@@ -221,9 +218,11 @@ export class AuthService {
     user_id: string,
     token_id: string,
   ): Promise<void> {
-    const count = await this.blacklistedTokensRepository.count({
-      user: user_id,
-      token_id,
+    const count = await this.prisma.blacklistToken.count({
+      where: {
+        user_id,
+        token_id,
+      },
     });
 
     if (count > 0) {
@@ -242,19 +241,17 @@ export class AuthService {
     );
   }
 
-  private async blacklistToken(
-    user_id: string,
-    token_id: string,
-  ): Promise<void> {
-    const blacklistedToken = this.blacklistedTokensRepository.create({
-      user: user_id,
-      token_id,
-    });
-    await this.commonService.saveEntity(
-      this.blacklistedTokensRepository,
-      blacklistedToken,
-      true,
-    );
+  private async blacklistToken(user_id: string, token_id: string) {
+    try {
+      await this.prisma.blacklistToken.create({
+        data: {
+          user_id,
+          token_id,
+        },
+      });
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
   }
 
   public async resetPasswordEmail(

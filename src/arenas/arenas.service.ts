@@ -1,13 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Arena, Court, Reservation } from '@prisma/client';
+import { Arena } from '@prisma/client';
 import { getDistance } from 'geolib';
 
 import { AddressesService } from './addresses/addresses.service';
 import { CreateArenaDto } from './dtos/create-arena.dto';
-import {
-  IAvailableSchedule,
-  ISchedule,
-} from './interfaces/available-schedule.interface';
 import { ResultsEnum } from '../common/results.enum';
 import { PrismaService } from '../prisma.service';
 

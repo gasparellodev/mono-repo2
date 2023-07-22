@@ -8,16 +8,13 @@ import { BlacklistedTokenEntity } from './entities/blacklisted-token.entity';
 import { AuthGuard } from './guards/auth.guard';
 import { JwtModule } from '../jwt/jwt.module';
 import { MailerModule } from '../mailer/mailer.module';
+import { PrismaService } from '../prisma.service';
 import { UsersModule } from '../users/users.module';
 
 @Module({
-  imports: [
-    MikroOrmModule.forFeature([BlacklistedTokenEntity]),
-    UsersModule,
-    JwtModule,
-    MailerModule,
-  ],
+  imports: [UsersModule, JwtModule, MailerModule],
   providers: [
+    PrismaService,
     AuthService,
     {
       provide: APP_GUARD,

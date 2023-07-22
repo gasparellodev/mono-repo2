@@ -55,26 +55,27 @@ enum TypeCourt {
 }
 
 model User {
-  id              String          @id @default(uuid())
-  name            String
-  username        String
-  nickname        String
-  cellphone       String
-  email           String          @unique
-  password_hash   String
-  avatar          String?
-  cpf             String?
-  favorite_sport  FavoriteSport
-  favorite_time   FavoriteTime
-  confirmed       Boolean         @default(false)
-  role            Role            @default(PLAYER)
-  created_at      DateTime        @default(now())
-  updated_at      DateTime        @updatedAt
-  credentials     Credentials?
-  reservations    Reservation[]
-  owned_arenas    Arena[]         @relation("owner")
-  managed_arenas  ArenaManager[]
-  oauth_providers OAuthProvider[]
+  id               String           @id @default(uuid())
+  name             String
+  username         String
+  nickname         String
+  cellphone        String
+  email            String           @unique
+  password_hash    String
+  avatar           String?
+  cpf              String?
+  favorite_sport   FavoriteSport
+  favorite_time    FavoriteTime
+  confirmed        Boolean          @default(false)
+  role             Role             @default(PLAYER)
+  created_at       DateTime         @default(now())
+  updated_at       DateTime         @updatedAt
+  credentials      Credentials?
+  reservations     Reservation[]
+  owned_arenas     Arena[]          @relation("owner")
+  managed_arenas   ArenaManager[]
+  oauth_providers  OAuthProvider[]
+  blacklist_tokens BlacklistToken[]
 
   @@map("users")
 }
@@ -89,6 +90,15 @@ model Credentials {
   user_id             String   @unique
 
   @@map("crendentials")
+}
+
+model BlacklistToken {
+  token_id String
+  user_id  String
+  user     User   @relation(fields: [user_id], references: [id])
+
+  @@id([token_id, user_id])
+  @@map("blacklist_tokens")
 }
 
 model ArenaManager {
@@ -216,13 +226,14 @@ enum PaymentStatus {
 }
 
 model PaymentGateway {
-  id            String             @id @default(uuid())
-  type          PaymentGatewayType
-  access_token  String
-  refresh_token String
-  expires_in    Int
-  generated_at  DateTime           @default(now())
-  arena         Arena              @relation(fields: [arena_id], references: [id])
+  id            String              @id @default(uuid())
+  state         String              @unique
+  type          PaymentGatewayType?
+  access_token  String?
+  refresh_token String?
+  expires_in    Int?
+  generated_at  DateTime            @default(now())
+  arena         Arena               @relation(fields: [arena_id], references: [id])
   arena_id      String
 
   @@map("payment_gateways")

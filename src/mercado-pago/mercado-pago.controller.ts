@@ -1,4 +1,5 @@
-import { Controller, Get, Query, Redirect } from '@nestjs/common';
+import { Controller, Get, Query, Redirect, Req } from '@nestjs/common';
+import { Request } from 'express-serve-static-core';
 
 import { MercadoPagoService } from './mercado-pago.service';
 import { Public } from '../auth/decorators/public.decorator';
@@ -8,16 +9,19 @@ export class MercadoPagoController {
   constructor(private readonly mercadoPagoService: MercadoPagoService) {}
 
   @Get('mercado-pago')
-  @Public()
-  @Redirect()
-  async redirectToMercadoPagoAuth() {
-    const authorizationUrl =
-      await this.mercadoPagoService.getAuthorizationUrl();
+  async redirectToMercadoPagoAuth(@Req() req: Request) {
+    const authorizationUrl = await this.mercadoPagoService.getAuthorizationUrl(
+      req.user,
+    );
     return { url: authorizationUrl };
   }
 
   @Get('mercado-pago/callback')
-  async mercadoPagoAuthCallback(@Query('code') code: string) {
+  @Public()
+  async mercadoPagoAuthCallback(
+    @Query('code') code: string,
+    @Query('state') state: string,
+  ) {
     const accessToken = await this.mercadoPagoService.getAccessToken(code);
 
     return { accessToken };
