@@ -102,18 +102,19 @@ model ArenaManager {
 }
 
 model Arena {
-  id            String         @id @default(uuid())
-  name          String
-  cnpj          String         @unique
-  phone         String
-  is_validated  DateTime?
-  address       Address        @relation(fields: [address_id], references: [id])
-  address_id    String         @unique
-  courts        Court[]
-  owner         User           @relation("owner", fields: [owner_id], references: [id])
-  owner_id      String
-  managers      ArenaManager[]
-  opening_hours OpeningHours[]
+  id               String           @id @default(uuid())
+  name             String
+  cnpj             String           @unique
+  phone            String
+  is_validated     DateTime?
+  address          Address          @relation(fields: [address_id], references: [id])
+  address_id       String           @unique
+  courts           Court[]
+  owner            User             @relation("owner", fields: [owner_id], references: [id])
+  owner_id         String
+  managers         ArenaManager[]
+  opening_hours    OpeningHours[]
+  payment_gateways PaymentGateway[]
 
   @@map("arenas")
 }
@@ -212,6 +213,23 @@ enum ReservationStatus {
 enum PaymentStatus {
   PAID
   UNPAID
+}
+
+model PaymentGateway {
+  id            String             @id @default(uuid())
+  type          PaymentGatewayType
+  access_token  String
+  refresh_token String
+  expires_in    Int
+  generated_at  DateTime           @default(now())
+  arena         Arena              @relation(fields: [arena_id], references: [id])
+  arena_id      String
+
+  @@map("payment_gateways")
+}
+
+enum PaymentGatewayType {
+  MERCADO_PAGO
 }
 
 model OAuthProvider {

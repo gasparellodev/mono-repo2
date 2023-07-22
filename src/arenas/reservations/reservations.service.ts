@@ -14,11 +14,13 @@ import {
   startOfHour,
 } from 'date-fns';
 import { zonedTimeToUtc } from 'date-fns-tz';
+import { getDistance } from 'geolib';
 import moment from 'moment';
 
 import 'moment-timezone';
 import { CreateReservationDto } from './dtos/create-reservation.dto';
 import { FindAllInMonthFromArenaDto } from './dtos/find-all-in-month-from-arena.dto';
+import { FindAllInDayResponse } from './interfaces/find-all-in-day.response.interface';
 import { ResultsEnum } from '../../common/results.enum';
 import { PrismaService } from '../../prisma.service';
 import { WeekDays } from '../opening-hours/enums/week-days.enum';
@@ -78,13 +80,19 @@ export class ReservationsService {
     });
   }
 
-  public async findAllInDay() {
-    const day = 22; // Dia fornecido pelo usuário
-    const month = 6; // Mês fornecido pelo usuário
-    const year = 2023; // Ano fornecido pelo usuário
+  public async findAllInDay(
+    date: Date,
+    latitude: number,
+    longitude: number,
+    only_available?: boolean,
+  ): Promise<FindAllInDayResponse[]> {
+    const day = date.getDate(); // Dia fornecido pelo usuário
+    const month = date.getMonth(); // Mês fornecido pelo usuário
+    const year = date.getFullYear(); // Ano fornecido pelo usuário
 
     const reservations = await this.prisma.arena.findMany({
       include: {
+        address: true,
         opening_hours: true,
         courts: {
           include: {
@@ -92,9 +100,29 @@ export class ReservationsService {
           },
         },
       },
+      where: {
+        courts: {
+          some: {
+            id: {
+              not: null,
+            },
+          },
+        },
+      },
     });
 
-    return reservations.map((arena) => {
+    const nearbyArenas = reservations.filter((arena) => {
+      const distance = getDistance(
+        { latitude, longitude },
+        {
+          latitude: arena.address.lat.toString(),
+          longitude: arena.address.lon.toString(),
+        },
+      );
+      return distance <= 25000; // 25 km em metros
+    });
+
+    return nearbyArenas.map((arena) => {
       const hasOpeningTime = arena.opening_hours.length > 0;
       //Não deve retornar arenas que não possuem horários de abertura e fechamento cadastrado
       if (!hasOpeningTime) {
@@ -127,7 +155,7 @@ export class ReservationsService {
           const reservationDate = new Date(reservation.date);
           return (
             reservationDate.getFullYear() === year &&
-            reservationDate.getMonth() === month - 1 &&
+            reservationDate.getMonth() === month &&
             reservationDate.getDate() === day
           );
         });
@@ -155,6 +183,18 @@ export class ReservationsService {
         };
       });
 
+      if (only_available) {
+        const availableCourts = courts.filter((court) =>
+          court.available_times.some((timeSlot) => timeSlot.available === true),
+        );
+
+        return {
+          arena: arena.name,
+          arena_id: arena.id,
+          courts: availableCourts,
+        };
+      }
+
       return {
         arena: arena.name,
         arena_id: arena.id,
@@ -168,9 +208,8 @@ export class ReservationsService {
     user_id: string,
   ) {
     const parsedDate = parseISO(date);
-    console.log(parsedDate);
+
     const reservationDate = startOfHour(parsedDate);
-    console.log(reservationDate);
     const court = await this.prisma.court.findUnique({
       where: { id: court_id },
       include: {
@@ -190,8 +229,6 @@ export class ReservationsService {
     }
 
     const now = moment().tz('America/Sao_Paulo').toISOString();
-
-    console.log(now, parsedDate, isBefore(parsedDate, parseISO(now)));
 
     if (isBefore(parsedDate, parseISO(now))) {
       //Can't create an registration on a past date

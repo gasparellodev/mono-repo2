@@ -22,6 +22,58 @@ export class ArenasService {
     return this.prisma.arena.findFirst({ where: { owner_id } });
   }
 
+  public async searchByLocation(
+    longitude: number,
+    latitude: number,
+    search: string,
+  ) {
+    const arenas = await this.prisma.arena.findMany({
+      where: {
+        name: {
+          contains: search,
+        },
+        courts: {
+          some: {
+            id: {
+              not: null,
+            },
+          },
+        },
+        is_validated: {
+          not: null,
+        },
+      },
+      include: {
+        address: true,
+      },
+    });
+
+    const nearbyArenas = arenas.filter((arena) => {
+      const distance = getDistance(
+        { latitude, longitude },
+        {
+          latitude: arena.address.lat.toString(),
+          longitude: arena.address.lon.toString(),
+        },
+      );
+      return distance <= 50000; // 50 km em metros
+    });
+
+    return nearbyArenas
+      .map((arena) => ({
+        id: arena.id,
+        name: arena.name,
+        distance: getDistance(
+          { latitude, longitude },
+          {
+            latitude: arena.address.lat.toString(),
+            longitude: arena.address.lon.toString(),
+          },
+        ),
+      }))
+      .sort((a, b) => a.distance - b.distance);
+  }
+
   public async create(
     { name, cnpj, phone, description, lat, lon }: CreateArenaDto,
     owner_id: string,
@@ -94,7 +146,19 @@ export class ArenasService {
       (item) => item.courts.length > 0,
     );
 
-    return filterWithRegisteredCourts
+    // Filtra as arenas que estão a no máximo 15 km de distância das coordenadas informadas
+    const nearbyArenas = filterWithRegisteredCourts.filter((arena) => {
+      const distance = getDistance(
+        { latitude, longitude },
+        {
+          latitude: arena.address.lat.toString(),
+          longitude: arena.address.lon.toString(),
+        },
+      );
+      return distance <= 15000; // 15 km em metros
+    });
+
+    return nearbyArenas
       .map((arena) => ({
         id: arena.id,
         name: arena.name,
