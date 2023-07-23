@@ -1,9 +1,10 @@
-import { LoadStrategy } from '@mikro-orm/core';
-import { defineConfig } from '@mikro-orm/postgresql';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+
+import { LoadStrategy } from '@mikro-orm/core';
+import { defineConfig } from '@mikro-orm/postgresql';
+
 import { IConfig } from './interfaces/config.interface';
-import { redisUrlParser } from './utils/redis-url-parser.util';
 
 export function config(): IConfig {
   const publicKey = readFileSync(
@@ -19,6 +20,7 @@ export function config(): IConfig {
     id: process.env.APP_ID,
     port: parseInt(process.env.PORT, 10),
     domain: process.env.DOMAIN,
+    corsOrigin: process.env.CORS_ORIGIN,
     jwt: {
       access: {
         privateKey,

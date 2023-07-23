@@ -14,7 +14,7 @@ async function bootstrap() {
   app.use(helmet());
   app.enableCors({
     credentials: true,
-    origin: configService.get<string>('domain'),
+    origin: configService.get<string>('corsOrigin'),
   });
   app.useGlobalPipes(
     new ValidationPipe({

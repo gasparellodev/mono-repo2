@@ -6,6 +6,7 @@ export interface FindAllInDayAvailableTimes {
 export interface FindAllInDayCourt {
   court: string;
   court_id: string;
+  sport_type: string;
   available_times: FindAllInDayAvailableTimes[];
 }
 

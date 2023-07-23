@@ -117,6 +117,7 @@ model Arena {
   cnpj             String           @unique
   phone            String
   is_validated     DateTime?
+  image            String?
   address          Address          @relation(fields: [address_id], references: [id])
   address_id       String           @unique
   courts           Court[]
@@ -169,6 +170,7 @@ model Court {
   type_court          TypeCourt
   sport_type          SportType
   dimensions          String?
+  image               String?
   covered_court       Boolean       @default(false)
   court_digital_timer Boolean       @default(false)
   court_cam_replay    Boolean       @default(false)
@@ -217,7 +219,7 @@ enum ReservationStatus {
   CONFIRMED
   CANCELLED_BY_TRANSACTION
   CANCELLED_BY_USER
-  CANCELLEB_BY_MANAGER_OR_OWNER
+  CANCELLED_BY_MANAGER_OR_OWNER
 }
 
 enum PaymentStatus {

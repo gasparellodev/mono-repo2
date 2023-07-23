@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Redirect, Req } from '@nestjs/common';
+import { Controller, Get, Query, Req } from '@nestjs/common';
 import { Request } from 'express-serve-static-core';
 
 import { MercadoPagoService } from './mercado-pago.service';
@@ -22,7 +22,10 @@ export class MercadoPagoController {
     @Query('code') code: string,
     @Query('state') state: string,
   ) {
-    const accessToken = await this.mercadoPagoService.getAccessToken(code);
+    const accessToken = await this.mercadoPagoService.getAccessToken(
+      code,
+      state,
+    );
 
     return { accessToken };
   }

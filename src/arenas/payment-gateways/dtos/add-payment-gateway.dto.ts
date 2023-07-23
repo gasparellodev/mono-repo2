@@ -19,13 +19,6 @@ export class AddPaymentGatewayDto {
   public type!: PaymentGatewaysType;
 
   @ApiProperty({
-    description: 'UUID da arena que será adicionado o gateway de pagamento',
-    type: String,
-  })
-  @IsString()
-  public arena_id!: string;
-
-  @ApiProperty({
     description: 'Token de acesso do gateway de pagamento',
     type: String,
   })

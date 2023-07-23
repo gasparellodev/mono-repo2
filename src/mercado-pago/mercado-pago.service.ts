@@ -3,7 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { v4 } from 'uuid';
 
+import { OauthTokenResponse } from './interfaces/oauth-token.response.interface';
+import { PaymentGatewaysType } from '../arenas/payment-gateways/enums/payment-gateways-type.enum';
 import { PaymentGatewaysService } from '../arenas/payment-gateways/payment-gateways.service';
+
 @Injectable()
 export class MercadoPagoService {
   private readonly redirect_uri: string;
@@ -37,7 +40,7 @@ export class MercadoPagoService {
       throw new InternalServerErrorException(error);
     }
   }
-  async getAccessToken(code: string): Promise<string> {
+  async getAccessToken(code: string, state: string): Promise<string> {
     const data = new URLSearchParams({
       grant_type: 'authorization_code',
       client_id: this.client_id,
@@ -48,12 +51,20 @@ export class MercadoPagoService {
     });
 
     try {
-      console.log(data);
-      const response = await axios.post(
-        'https://api.mercadopago.com/oauth/token',
-        data,
+      const url = `${this.configService.get(
+        'MERCADO_PAGO_URI_API',
+      )}/oauth/token`;
+      const response = await axios.post<OauthTokenResponse>(url, data);
+
+      await this.paymentGatewaysService.create(
+        {
+          type: PaymentGatewaysType.MERCADO_PAGO,
+          access_token: response.data.access_token,
+          refresh_token: response.data.refresh_token,
+          expires_in: response.data.expires_in,
+        },
+        state,
       );
-      console.log(response.data);
 
       return response.data.access_token;
     } catch (error) {

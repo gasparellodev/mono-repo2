@@ -20,15 +20,40 @@ import moment from 'moment';
 import 'moment-timezone';
 import { CreateReservationDto } from './dtos/create-reservation.dto';
 import { FindAllInMonthFromArenaDto } from './dtos/find-all-in-month-from-arena.dto';
+import { ReservationStatus } from './enums/reservation-status.enum';
 import { FindAllInDayResponse } from './interfaces/find-all-in-day.response.interface';
+import { FindByUserResponse } from './interfaces/find-by-user.response.interface';
 import { ResultsEnum } from '../../common/results.enum';
 import { PrismaService } from '../../prisma.service';
-import { WeekDays } from '../opening-hours/enums/week-days.enum';
 import { getWeekNumber } from '../utils/get-week-number';
 
 @Injectable()
 export class ReservationsService {
   constructor(private readonly prisma: PrismaService) {}
+
+  public async findByUser(user_id: string): Promise<FindByUserResponse[]> {
+    const reservation = await this.prisma.reservation.findMany({
+      where: { user_id },
+      include: {
+        court: {
+          include: { arena: true },
+        },
+      },
+    });
+
+    return reservation.map((reservation) => {
+      return {
+        id: reservation.id,
+        date: reservation.date,
+        court: reservation.court.name,
+        court_id: reservation.court_id,
+        sport_type: reservation.court.sport_type,
+        arena: reservation.court.arena.name,
+        arena_id: reservation.court.arena.id,
+        status: reservation.status,
+      };
+    });
+  }
 
   public async findByDate(date: Date, court_id: string) {
     return this.prisma.reservation.findFirst({
@@ -85,6 +110,7 @@ export class ReservationsService {
     latitude: number,
     longitude: number,
     only_available?: boolean,
+    arena_id?: string,
   ): Promise<FindAllInDayResponse[]> {
     const day = date.getDate(); // Dia fornecido pelo usuário
     const month = date.getMonth(); // Mês fornecido pelo usuário
@@ -104,10 +130,14 @@ export class ReservationsService {
         courts: {
           some: {
             id: {
-              not: null,
+              not: undefined,
             },
           },
         },
+        // Filtra pela arena informada, caso seja informado
+        ...(arena_id && {
+          id: arena_id,
+        }),
       },
     });
 
@@ -179,6 +209,7 @@ export class ReservationsService {
         return {
           court: court.name,
           court_id: court.id,
+          sport_type: court.sport_type,
           available_times,
         };
       });

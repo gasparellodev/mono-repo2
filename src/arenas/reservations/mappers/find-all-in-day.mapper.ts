@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { v4 } from 'uuid';
 
+import { SportType } from '../../courts/enum/sport-type.enum';
 import {
   FindAllInDayAvailableTimes,
   FindAllInDayCourt,
@@ -39,6 +40,7 @@ class FindAllInDayAvailableTimesMapper {
 class FindAllInDayCourtMapper {
   public court: string;
   public court_id: string;
+  public sport_type: SportType;
   @ApiProperty({
     description: 'Horários disponíveis',
     example: [
@@ -59,6 +61,7 @@ class FindAllInDayCourtMapper {
     return new FindAllInDayCourtMapper({
       court: result.court,
       court_id: result.court_id,
+      sport_type: result.sport_type,
       available_times: result.available_times.map((availableTime) =>
         FindAllInDayAvailableTimesMapper.map(availableTime),
       ),

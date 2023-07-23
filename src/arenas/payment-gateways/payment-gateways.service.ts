@@ -8,13 +8,7 @@ export class PaymentGatewaysService {
   constructor(private readonly prisma: PrismaService) {}
 
   public async create(
-    {
-      type,
-      arena_id,
-      access_token,
-      refresh_token,
-      expires_in,
-    }: AddPaymentGatewayDto,
+    { type, access_token, refresh_token, expires_in }: AddPaymentGatewayDto,
     state: string,
   ) {
     return this.prisma.paymentGateway.update({
@@ -23,7 +17,6 @@ export class PaymentGatewaysService {
       },
       data: {
         type,
-        arena_id,
         access_token,
         refresh_token,
         expires_in,
